@@ -596,6 +596,7 @@ static int eval_mm_valid(trace_t *trace, int tracenum, range_t **ranges)
 
     /* Interpret each operation in the trace in order */
     for (i = 0;  i < trace->num_ops;  i++) {
+		printf("\n\nOP IS %d / %d\n", i, trace->num_ops);
 	index = trace->ops[i].index;
 	size = trace->ops[i].size;
 
@@ -605,8 +606,8 @@ static int eval_mm_valid(trace_t *trace, int tracenum, range_t **ranges)
 
 	    /* Call the student's malloc */
 	    if ((p = mm_malloc(size)) == NULL) {
-		malloc_error(tracenum, i, "mm_malloc failed.");
-		return 0;
+			malloc_error(tracenum, i, "mm_malloc failed.");
+			return 0;
 	    }
 	    
 	    /* 
@@ -615,7 +616,7 @@ static int eval_mm_valid(trace_t *trace, int tracenum, range_t **ranges)
 	     * and must not overlap any currently allocated block. 
 	     */ 
 	    if (add_range(ranges, p, size, tracenum, i) == 0)
-		return 0;
+			return 0;
 	    
 	    /* ADDED: cgw
 	     * fill range with low byte of index.  This will be used later
@@ -634,8 +635,8 @@ static int eval_mm_valid(trace_t *trace, int tracenum, range_t **ranges)
 	    /* Call the student's realloc */
 	    oldp = trace->blocks[index];
 	    if ((newp = mm_realloc(oldp, size)) == NULL) {
-		malloc_error(tracenum, i, "mm_realloc failed.");
-		return 0;
+			malloc_error(tracenum, i, "mm_realloc failed.");
+			return 0;
 	    }
 	    
 	    /* Remove the old region from the range list */
@@ -643,7 +644,7 @@ static int eval_mm_valid(trace_t *trace, int tracenum, range_t **ranges)
 	    
 	    /* Check new block for correctness and add it to range list */
 	    if (add_range(ranges, newp, size, tracenum, i) == 0)
-		return 0;
+			return 0;
 	    
 	    /* ADDED: cgw
 	     * Make sure that the new block contains the data from the old 
@@ -651,13 +652,15 @@ static int eval_mm_valid(trace_t *trace, int tracenum, range_t **ranges)
 	     * of the new index
 	     */
 	    oldsize = trace->block_sizes[index];
-	    if (size < oldsize) oldsize = size;
-	    for (j = 0; j < oldsize; j++) {
-	      if (newp[j] != (index & 0xFF)) {
-		malloc_error(tracenum, i, "mm_realloc did not preserve the "
-			     "data from old block");
-		return 0;
-	      }
+	    if (size < oldsize)
+			oldsize = size;
+
+		for (j = 0; j < oldsize; j++) {
+			if (newp[j] != (index & 0xFF)) {
+				malloc_error(tracenum, i, "mm_realloc did not preserve the "
+						"data from old block");
+				return 0;
+			}
 	    }
 	    memset(newp, index & 0xFF, size);
 
